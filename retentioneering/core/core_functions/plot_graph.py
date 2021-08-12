@@ -9,7 +9,7 @@ from IPython.display import display, HTML
 
 def plot_graph(self, *,
                targets={},
-               weight_col=None,
+               weight_cols=None,
                norm_type='full',
                layout_dump=None,
                width=800,
@@ -92,16 +92,18 @@ def plot_graph(self, *,
             targets[k] = v
 
     node_weights = self._obj[event_col].value_counts().to_dict()
-    data = self.get_edgelist(weight_col=weight_col,
+    data = self.get_graph_edgelist(weight_cols=weight_cols,
                              norm_type=norm_type)
 
     path = draw_graph.graph(data,
                             node_params=targets,
                             node_weights=node_weights,
                             layout_dump=layout_dump,
+                            weight_cols=weight_cols,
                             width=width,
                             height=height,
                             thresh=thresh)
+    return path
 
     # if work from google colab user HTML display:
     try:

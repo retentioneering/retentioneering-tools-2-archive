@@ -60,20 +60,35 @@ def _prepare_nodes(data, pos, node_params, degrees):
     return nodes
 
 
-def _prepare_edges(data, nodes):
+def _prepare_edges(data, nodes, weight_cols):
     edges = []
     data['weight_norm'] = data['weight'] / data['weight'].abs().max()
     for idx, row in data.iterrows():
+        weights = {
+            "number_of_events": {
+                "weight_norm": row.weight_norm,
+                "weight": row.weight,
+            },
+        }
+
+        for weight_col in weight_cols:
+            weight_norm = row[weight_col] / data[weight_col].abs().max()
+            weights[weight_col] = {
+                "weight_norm": weight_norm,
+                "weight": row[weight_col],
+            }
+
         edges.append({
             "source": nodes.get(row.source),
             "target": nodes.get(row.target),
-            "weight": row.weight_norm,
-            "weight_text": row.weight,
+            "weights": weights,
             "type": row['type']
         })
+
+
     return edges, list(nodes.values())
 
-
+# LEGACY
 def _filter_edgelist(data,
                      thresh,
                      node_params,
@@ -91,13 +106,15 @@ def _filter_edgelist(data,
 def _make_json_data(data,
                     node_params,
                     layout_dump,
+                    weight_cols=None,
                     thresh=0.0,
                     width=500,
                     height=500,
                     **kwargs):
     res = {}
-    data.columns = ['source', 'target', 'weight']
-    # data = _filter_edgelist(data, thresh, node_params)
+    if weight_cols is None:
+        weight_cols = []
+    data.columns = ['source', 'target', 'weight'] + weight_cols
 
     data["type"] = data.apply(
         lambda x: node_params.get(x.source) if node_params.get(x.source) == 'source' else node_params.get(
@@ -113,7 +130,7 @@ def _make_json_data(data,
     else:
         nodes = _prepare_nodes(data, pos, node_params, degrees)
 
-    res['links'], res['nodes'] = _prepare_edges(data, nodes)
+    res['links'], res['nodes'] = _prepare_edges(data, nodes, weight_cols)
     return res
 
 
@@ -159,6 +176,7 @@ def graph(data, *,
           height=500,
           interactive=True,
           layout_dump=None,
+          weight_cols=None,
           show_percent=True,
           plot_name=None,
           node_weights=None,
@@ -217,18 +235,27 @@ def graph(data, *,
     """
     scale = data['edge_weight'].abs().max()
 
+    if thresh is None:
+        thresh = 0.0
+
     if node_params is None:
         node_params = _prepare_node_params(node_params, data)
     res = _make_json_data(data,
                           node_params,
                           layout_dump,
                           thresh=thresh,
+                          weight_cols=weight_cols,
                           width=round(width - width / 3),
                           height=round(height - height / 3),
                           node_weights=node_weights,
                           **kwargs)
 
     res['node_params'] = node_params
+
+    if weight_cols is None:
+        weight_cols = []
+
+    links_weights_names = ["number_of_events"] + weight_cols
 
     show = 0
     if show_percent:
@@ -247,8 +274,11 @@ def graph(data, *,
             show_percent=show,
             layout_dump=dump,
             thresh=thresh/scale,
-            scale=scale
-    )
+            scale=scale,
+            links_weights_names=links_weights_names,
+            nodes_threshold="undefined",
+            links_threshold="undefined"
+        )
 
     plot_name = 'graph_{}'.format(datetime.now()).replace(':', '_').replace('.', '_') + '.html'
     plot_name = _.rete.retention_config['experiments_folder'] + '/' + plot_name

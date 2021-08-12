@@ -31,310 +31,64 @@ __TEMPLATE__ = """
 <head>
   <meta charset="UTF-8">
   <title>Graph Editor</title>
-  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
-  <script src="https://api.retentioneering.com/files/d3.v4.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-  <script src="https://static.server.retentioneering.com/viztools/draw-graph.min.js" type="text/javascript"></script>
   <style type="text/css">
-      .download {{
-        display: flex;
-        align-items: center;
-      }}
+    .svg-watermark {{
+      width: 100%;
+      font-size: 80px;
+      fill: #c2c2c2;
+      opacity: 0.3;
+      font-family: Arial;
+    }}
 
-      .download__btn {{
-        margin-right: 16px;
-      }}
+    .link {{
+      fill: none;
+      stroke: #666;
+      stroke-opacity: 0.7;
+    }}
 
-      .download__link {{
-        color: inherit !important;
-      }}
+    text {{
+      font: 12px sans-serif;
+      pointer-events: none;
+    }}
 
+    circle {{
+      fill: #ccc;
+      stroke: #333;
+      stroke-width: 1.5px;
+    }}
 
-      .watermark {{
-        width: 100%;
-      }}
-      .watermark h3 {{
-        width: 100%;
-        text-align: center;
-      }}
+    .selected-node {{
+      stroke: blue;
+    }}
 
-      .svg-watermark {{
-        width: 100%;
-        font-size: 80px;
-        fill: #c2c2c2;
-        opacity: 0.3;
-        font-family: Arial;
-      }}
+    .circle.source_node {{
+      fill: #f3f310;
+    }}
 
-      html {{
-        font-size: 10px;
-      }}
+    .circle.nice_node {{
+      fill: green;
+    }}
 
-      circle {{
-        fill: #ccc;
-        stroke: #333;
-        stroke-width: 1.5px;
-      }}
-
-      .circle.source_node {{
-        fill: #f3f310;
-      }}
-
-      .circle.nice_node {{
-        fill: green;
-      }}
-
-      .circle.bad_node {{
-        fill: red;
-      }}
-
-      .link {{
-        fill: none;
-        stroke: #666;
-        stroke-opacity: 0.7;
-      }}
-
-      #nice_target {{
-        fill: green;
-      }}
-
-      .link.nice_target {{
-        stroke: green;
-      }}
-
-      #source {{
-        fill: yellow;
-      }}
-
-      .link.source {{
-        stroke: #f3f310;
-      }}
-
-      .link.positive {{
-        stroke: green;
-      }}
-
-      .link.negative {{
-        stroke: red;
-      }}
-
-      #source {{
-        fill: orange;
-      }}
-
-      .link.source1 {{
-        stroke: orange;
-      }}
-
-      #bad_target {{
-        fill: red;
-      }}
-
-      .link.bad_target {{
-        stroke: red;
-      }}
-      text {{
-        font: 12px sans-serif;
-        pointer-events: none;
-      }}
-
-      main li {{
-        display: inline;
-      }}
-      .graphlist {{
-        list-style-type: none;
-
-      }}
-      .graphloader {{
-        margin-top: 5%;
-        margin-bottom: 5%;
-      }}
-      .graphloader input {{
-        margin: auto;
-      }}
-
-      h1 {{
-        text-align: center;
-      }}
-
-      .bottom-checkbox {{
-        margin-right: 5%;
-        display: inline;
-      }}
-
-      .checkbox-class {{
-        margin-right: 3px;
-      }}
-
-      .node-edit {{
-        position: relative;
-        font-size: 12px;
-        border: none;
-        background-color: rgba(1,1,1,0);
-      }}
-
-      .node-edit:focus {{
-        background-color: #ddd;
-      }}
-
-      #option {{
-        margin-left: 5px;
-      }}
-
-      #freakingGraph {{
-        border: solid 2px black;
-        /*position: relative;*/
-      }}
-
-      .container {{
-        margin: 0!important;
-        padding-right: 0!important;
-        max-width: 1200px!important;
-      }}
-      .col-8 {{
-        padding: 0px 4px 0px 2px!important;
-      }}
-      .col-4 {{
-        padding-right: 0px!important;
-      }}
-      @media (max-width: 576px) {{
-        form label {{
-          font-size: 10px;
-        }}
-      }}
-
-
-      @media (max-width: 768px) {{
-        form label {{
-          font-size: 0.8rem;
-        }}
-      }}
-
-
-      @media (max-width: 992px) {{
-        form label {{
-          font-size: 1rem;
-        }}
-      }}
-
-      @media (max-width: 1200px) {{
-        form label {{
-          font-size: 1rem;
-        }}
-      }}
-
-      @media (min-width: 1201px) {{
-        form label {{
-          font-size: 1.4rem;
-        }}
-      }}
+    .circle.bad_node {{
+      fill: red;
+    }}
 
   </style>
 </head>
 <body>
-
-
-
-  <main>
-
-    <div class="container">
-
-        <div class="row">
-          <div class="watermark" style="z-index: 1010; background-color: #FFF; width: 100%">
-            <h3>Retentioneering</h3>
-          </div>
-          <div class="col-8">
-
-            <div id="freakingGraph" style="z-index: 1000">
-              <!-- graph will be appended here -->
-            </div>
-          </div>
-          <div class="col-4" style="z-index: 1010; background-color: #FFF">
-            <form>
-              <div id="check-boxes">
-
-              </div>
-              <br>
-              <input name="submit" value="Update nodes" style="width: 80%;" type="button" onclick="changeNodes()">
-
-            </form>
-
-            <br>
-            <br>
-            <div style="z-index: 1010; background-color: #FFF">
-              <h6>Nodes Threshold</h6>
-              <input id="threshold-node-range" name="threshold-node" type="range" min="0" max="1" step="0.01" value="0.05"
-              oninput="updateNodeThresholdText(this.value)" onchange="updateNodeThresholdText(this.value)">
-              <label id="threshold-node-text">0.05</label>
-            </div>
-            <br>
-            <div>
-              <h6>Links Threshold</h6>
-              <input id="threshold-link-range" name="threshold" type="range" min="0" max="1" step="0.01" value={thresh}
-              oninput="updateLinkThresholdText(this.value*{scale})" onchange="updateLinkThresholdText(this.value*{scale})">
-              <label id="threshold-link-text">{thresh}</label>
-            </div>
-            <div>
-              <input type="button" value="Set thresholds" onclick="setThresholds()">
-            </div>
-          </div>
-
-
-
-
-          <div class="col-12" style="z-index: 1010; background-color: #FFF">
-
-            <div class="weight-checkbox bottom-checkbox">
-              <input type="checkbox" class="checkbox checkbox-class" checked value="weighted" id="show-weights"><label> Show weights </label>
-            </div>
-
-            <div class="percent-checkbox bottom-checkbox">
-              <input type="checkbox" class="checkbox checkbox-class" checked id="show-percents"><label> Percents </label>
-            </div>
-
-            <div class="bottom-checkbox">
-              <input type="checkbox" class="checkbox checkbox-class" checked id="show-names" onchange="changeNamesVisibility(this.checked)"><label> Show nodes names</label>
-            </div>
-
-            <div class="bottom-checkbox">
-              <input type="checkbox" class="checkbox checkbox-class" id="block-targets" onchange="setLinkThreshold ()"><label> Show all edges for targets </label>
-            </div>
-            <div class="download">
-              <div id="option" class="download__btn">
-                <input name="downloadButton"
-                type="button"
-                value="download"
-                onclick="downloadLayout()" />
-              </div>
-              <div class="download__btn">
-                <button type="button" onclick="downloadSVG('svg', 'graph')">
-                  download SVG
-                </button>
-              </div>
-              <div class="download__btn">
-                <button type="button" onclick="downloadPNG('svg', 'graph', 4)">
-                  download PNG
-                </button>
-              </div>
-            </div>
-          </div>
-      </div>
-
-
-
-
-  </main>
-  <script type="text/javascript">
-    updateLinkThresholdText({thresh}*{scale});
-    initialize({nodes}, {node_params}, {links}, {layout_dump});
-
-    if (!{show_percent}) {{
-      $('.percent-checkbox').hide();
-    }}
-  </script>
+  <div id="root"></div>
 </body>
+<script src="http://localhost:8080/rete-graph.js" type="text/javascript"></script>
+<script type="text/javascript">
+  initialize({{
+    nodes: {nodes},
+    links: {links},
+    linksWeightsNames: {links_weights_names},
+    nodesThreshold: {nodes_threshold},
+    linksThreshold: {links_threshold},
+    useLayoutDump: Boolean({layout_dump}),
+  }})
+</script>
 </html>
 """
 

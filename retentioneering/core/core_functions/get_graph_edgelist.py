@@ -6,10 +6,9 @@
 import pandas as pd
 
 
-def get_edgelist(self, *,
-                 weight_col=None,
-                 norm_type=None,
-                 edge_attributes='edge_weight'):
+def get_graph_edgelist(self, *,
+                 weight_cols=None,
+                 norm_type=None):
     """
     Creates weighted table of the transitions between events.
 
@@ -49,33 +48,49 @@ def get_edgelist(self, *,
 
     data = self._get_shift().copy()
 
+    default_weight_col = "edge_weight"
+
     # get aggregation:
-    if weight_col is None:
+    if weight_cols is None:
         agg = (data
                .groupby(cols)[time_col]
                .count()
                .reset_index())
-        agg.rename(columns={time_col: edge_attributes}, inplace=True)
+        agg.rename(columns={time_col: default_weight_col}, inplace=True)
     else:
         agg = (data
-               .groupby(cols)[weight_col]
-               .nunique()
+               .groupby(cols)[time_col]
+               .count()
                .reset_index())
-        agg.rename(columns={weight_col: edge_attributes}, inplace=True)
+        agg.rename(columns={time_col: default_weight_col}, inplace=True)
+
+        for weight_col in weight_cols:
+            agg_i = (data
+                .groupby(cols)[weight_col]
+                .nunique()
+                .reset_index())
+
+            agg = agg.join(agg_i[weight_col])
 
     # apply normalization:
     if norm_type == 'full':
         if weight_col is None:
-            agg[edge_attributes] /= agg[edge_attributes].sum()
+            agg[default_weight_col] /= agg[default_weight_col].sum()
         else:
-            agg[edge_attributes] /= data[weight_col].nunique()
+            agg[default_weight_col] /= agg[default_weight_col].sum()
+            for weight_col in weight_cols:
+                agg[weight_col] /= data[weight_col].nunique()
 
     if norm_type == 'node':
         if weight_col is None:
             event_transitions_counter = data.groupby(event_col)[cols[1]].count().to_dict()
-            agg[edge_attributes] /= agg[cols[0]].map(event_transitions_counter)
+            agg[default_weight_col] /= agg[cols[0]].map(event_transitions_counter)
         else:
-            user_counter = data.groupby(cols[0])[weight_col].nunique().to_dict()
-            agg[edge_attributes] /= agg[cols[0]].map(user_counter)
+            event_transitions_counter = data.groupby(event_col)[cols[1]].count().to_dict()
+            agg[default_weight_col] /= agg[cols[0]].map(event_transitions_counter)
+
+            for weight_col in weight_cols:
+                user_counter = data.groupby(cols[0])[weight_col].nunique().to_dict()
+                agg[weight_col] /= agg[cols[0]].map(user_counter)
 
     return agg
