@@ -12,9 +12,10 @@ def plot_graph(self, *,
                weight_cols=None,
                norm_type='full',
                layout_dump=None,
-               width=800,
-               height=500,
-               thresh=0):
+               width=960,
+               height=740,
+               nodes_threshold=None,
+               links_threshold=None):
     """
     Create interactive graph visualization. Each node is a unique event_col
     value, edges are transitions between events and edge weights are calculated
@@ -91,7 +92,10 @@ def plot_graph(self, *,
                 v = 'nice_target'
             targets[k] = v
 
-    node_weights = self._obj[event_col].value_counts().to_dict()
+    nodes_df = self._obj[event_col].value_counts()
+    nodes_scale = nodes_df.abs().max()
+
+    node_weights = nodes_df.to_dict()
     data = self.get_graph_edgelist(weight_cols=weight_cols,
                              norm_type=norm_type)
 
@@ -102,7 +106,9 @@ def plot_graph(self, *,
                             weight_cols=weight_cols,
                             width=width,
                             height=height,
-                            thresh=thresh)
+                            nodes_scale=nodes_scale,
+                            nodes_threshold=nodes_threshold,
+                            links_threshold=links_threshold)
     return path
 
     # if work from google colab user HTML display:

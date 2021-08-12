@@ -107,7 +107,6 @@ def _make_json_data(data,
                     node_params,
                     layout_dump,
                     weight_cols=None,
-                    thresh=0.0,
                     width=500,
                     height=500,
                     **kwargs):
@@ -171,9 +170,11 @@ def _prepare_given_layout(nodes_path, node_params, degrees):
 @__save_plot__
 def graph(data, *,
           node_params=None,
-          thresh=0.0,
-          width=800,
-          height=500,
+          nodes_scale=None,
+          nodes_threshold=None,
+          links_threshold=None,
+          width=960,
+          height=740,
           interactive=True,
           layout_dump=None,
           weight_cols=None,
@@ -235,15 +236,22 @@ def graph(data, *,
     """
     scale = data['edge_weight'].abs().max()
 
-    if thresh is None:
-        thresh = 0.0
+    normlinksThreshold = None
+
+    if links_threshold is not None:
+        normlinksThreshold = {}
+        for key in links_threshold:
+            if key == "number_of_events":
+                normlinksThreshold["number_of_events"] = links_threshold["number_of_events"]/scale
+            else:
+                s = data[key].abs().max()
+                normlinksThreshold[key] = links_threshold[key]/s
 
     if node_params is None:
         node_params = _prepare_node_params(node_params, data)
     res = _make_json_data(data,
                           node_params,
                           layout_dump,
-                          thresh=thresh,
                           weight_cols=weight_cols,
                           width=round(width - width / 3),
                           height=round(height - height / 3),
@@ -273,11 +281,9 @@ def graph(data, *,
             nodes=json.dumps(res.get('nodes')).encode('latin1').decode('utf-8'),
             show_percent=show,
             layout_dump=dump,
-            thresh=thresh/scale,
-            scale=scale,
             links_weights_names=links_weights_names,
-            nodes_threshold="undefined",
-            links_threshold="undefined"
+            nodes_threshold=nodes_threshold / nodes_scale if nodes_threshold is not None else "undefined",
+            links_threshold=normlinksThreshold if normlinksThreshold is not None else "undefined"
         )
 
     plot_name = 'graph_{}'.format(datetime.now()).replace(':', '_').replace('.', '_') + '.html'

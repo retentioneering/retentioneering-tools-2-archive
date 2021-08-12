@@ -90,4 +90,4 @@ class __SaveFigWrapper__(object):
         with open(name, 'w', encoding="utf-8") as f:
             f.write(self.data)
         if self.interactive:
-            display(IFrame(name, width=self.width + 200, height=self.height + 200))
+            display(IFrame(name, width=self.width, height=self.height))
