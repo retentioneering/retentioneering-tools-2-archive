@@ -109,13 +109,13 @@ def plot_graph(self, *,
                             nodes_scale=nodes_scale,
                             nodes_threshold=nodes_threshold,
                             links_threshold=links_threshold)
-    return path
 
     # if work from google colab user HTML display:
     try:
         import google.colab
         display(HTML(path))
         print("use colab")
+        return
     except:
         print("use standart env")
         pass
