@@ -115,7 +115,9 @@ def plot_graph(self, *,
     try:
         import google.colab
         display(HTML(path))
+        print("use colab")
     except:
+        print("use standart env")
         pass
 
     return path
