@@ -89,5 +89,6 @@ class __SaveFigWrapper__(object):
     def savefig(self, name, **kwargs):
         with open(name, 'w', encoding="utf-8") as f:
             f.write(self.data)
-        if self.interactive:
+        # if self.interactive:
             # display(IFrame(name, width=self.width, height=self.height))
+
