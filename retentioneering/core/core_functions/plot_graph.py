@@ -113,6 +113,7 @@ def plot_graph(self, *,
                             weight_cols=weight_cols,
                             width=width,
                             height=height,
+                            interactive=interactive,
                             nodes_scale=nodes_scale,
                             nodes_threshold=nodes_threshold,
                             links_threshold=links_threshold)
