@@ -99,6 +99,13 @@ def plot_graph(self, *,
     data = self.get_graph_edgelist(weight_cols=weight_cols,
                              norm_type=norm_type)
 
+    interactive = True
+    try:
+        import google.colab
+        interactive = False
+    except:
+        pass
+
     path = draw_graph.graph(data,
                             node_params=targets,
                             node_weights=node_weights,
@@ -111,13 +118,8 @@ def plot_graph(self, *,
                             links_threshold=links_threshold)
 
     # if work from google colab user HTML display:
-    try:
-        import google.colab
+    if interactive == False:
         display(HTML(path))
-        print("use colab")
         return
-    except:
-        print("use standart env")
-        pass
 
     return path
