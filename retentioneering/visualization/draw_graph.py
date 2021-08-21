@@ -43,11 +43,20 @@ def _calc_layout(data,
     return pos_new, dict(G.degree)
 
 
-def _prepare_nodes(data, pos, node_params, degrees):
+def _prepare_nodes(data, pos, node_params, node_cols, nodelist):
     node_set = set(data['source']) | set(data['target'])
-    max_degree = max(degrees.values())
+    cols = ["number_of_events"] + node_cols
+
+    # max_degree = max(degrees.values())
     nodes = {}
     for idx, node in enumerate(node_set):
+        degree = {}
+        for weight_col in cols:
+            max_degree = nodelist[weight_col].max()
+            row = nodelist.loc[nodelist["event"] == node]
+            index = row.index[0]
+            value = row[weight_col][index]
+            degree[weight_col] = (abs(value)) / abs(max_degree) * 30 + 4
         node_pos = pos.get(node)
         nodes.update({node: {
             "index": idx,
@@ -55,7 +64,7 @@ def _prepare_nodes(data, pos, node_params, degrees):
             "x": node_pos[0],
             "y": node_pos[1],
             "type": (node_params.get(node) or "suit").split('_')[0] + '_node',
-            "degree": (abs(degrees.get(node, 0))) / abs(max_degree) * 30 + 4
+            "degree": degree
         }})
     return nodes
 
@@ -106,6 +115,7 @@ def _filter_edgelist(data,
 def _make_json_data(data,
                     node_params,
                     layout_dump,
+                    node_cols=None,
                     weight_cols=None,
                     width=500,
                     height=500,
@@ -113,6 +123,10 @@ def _make_json_data(data,
     res = {}
     if weight_cols is None:
         weight_cols = []
+
+    if node_cols is None:
+        node_cols = []
+
     data.columns = ['source', 'target', 'weight'] + weight_cols
 
     data["type"] = data.apply(
@@ -121,13 +135,13 @@ def _make_json_data(data,
 
     pos, degrees = _calc_layout(data, node_params, width=width, height=height, **kwargs)
 
-    if kwargs.get('node_weights') is not None:
-        degrees = kwargs.get('node_weights')
+    if kwargs.get('nodelist') is not None:
+        nodelist = kwargs.get('nodelist')
 
     if layout_dump is not None:
-        nodes = _prepare_given_layout(layout_dump, node_params, degrees)
+        nodes = _prepare_given_layout(layout_dump, node_params)
     else:
-        nodes = _prepare_nodes(data, pos, node_params, degrees)
+        nodes = _prepare_nodes(data, pos, node_params, node_cols, nodelist)
 
     res['links'], res['nodes'] = _prepare_edges(data, nodes, weight_cols)
     return res
@@ -156,7 +170,7 @@ def _prepare_layout(layout):
     return nodes
 
 
-def _prepare_given_layout(nodes_path, node_params, degrees):
+def _prepare_given_layout(nodes_path, node_params):
     if type(nodes_path) is str:
         with open(nodes_path, encoding='utf-8') as f:
             nodes = json.load(f)
@@ -170,17 +184,17 @@ def _prepare_given_layout(nodes_path, node_params, degrees):
 @__save_plot__
 def graph(data, *,
           node_params=None,
-          nodes_scale=None,
           nodes_threshold=None,
           links_threshold=None,
           width=960,
-          height=740,
+          height=900,
           interactive=True,
           layout_dump=None,
           weight_cols=None,
+          node_cols=None,
           show_percent=True,
           plot_name=None,
-          node_weights=None,
+          nodelist=None,
           **kwargs):
     """
     Create interactive graph visualization. Each node is a unique ``event_col`` value, edges are transitions between events and edge weights are calculated metrics. By default, it is a percentage of unique users that have passed though a particular edge visualized with the edge thickness. Node sizes are  Graph loop is a transition to the same node, which may happen if users encountered multiple errors or made any action at least twice.
@@ -247,15 +261,25 @@ def graph(data, *,
                 s = data[key].abs().max()
                 normlinksThreshold[key] = links_threshold[key]/s
 
+    normNodesThreshold = None
+    if nodes_threshold is not None:
+        normNodesThreshold = {}
+        for key in nodes_threshold:
+            scale = nodelist[key].abs().max()
+            normNodesThreshold[key] = nodes_threshold[key]/scale
+
+
+
     if node_params is None:
         node_params = _prepare_node_params(node_params, data)
     res = _make_json_data(data,
                           node_params,
                           layout_dump,
                           weight_cols=weight_cols,
+                          node_cols=node_cols,
                           width=round(width - width / 3),
                           height=round(height - height / 3),
-                          node_weights=node_weights,
+                          nodelist=nodelist,
                           **kwargs)
 
     res['node_params'] = node_params
@@ -263,7 +287,11 @@ def graph(data, *,
     if weight_cols is None:
         weight_cols = []
 
+    if node_cols is None:
+        node_cols = []
+
     links_weights_names = ["number_of_events"] + weight_cols
+    node_cols_names = ["number_of_events"] + node_cols
 
     show = 0
     if show_percent:
@@ -282,7 +310,8 @@ def graph(data, *,
             show_percent=show,
             layout_dump=dump,
             links_weights_names=links_weights_names,
-            nodes_threshold=nodes_threshold / nodes_scale if nodes_threshold is not None else "undefined",
+            node_cols_names=node_cols_names,
+            nodes_threshold=normNodesThreshold if normNodesThreshold is not None else "undefined",
             links_threshold=normlinksThreshold if normlinksThreshold is not None else "undefined"
         )
 

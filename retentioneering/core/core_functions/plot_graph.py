@@ -9,11 +9,13 @@ from IPython.display import display, HTML
 
 def plot_graph(self, *,
                targets={},
+               edgelist=None,
+               nodelist=None,
                weight_cols=None,
-               norm_type='full',
+               node_cols=None,
                layout_dump=None,
                width=960,
-               height=740,
+               height=900,
                nodes_threshold=None,
                links_threshold=None):
     """
@@ -80,9 +82,6 @@ def plot_graph(self, *,
     Renders IFrame object and saves graph visualization as HTML in
     experiments_folder of retention_config.
     """
-
-    event_col = self.retention_config['event_col']
-
     # TODO: change downstream processing
     if targets is not None:
         for k, v in targets.items():
@@ -92,12 +91,10 @@ def plot_graph(self, *,
                 v = 'nice_target'
             targets[k] = v
 
-    nodes_df = self._obj[event_col].value_counts()
-    nodes_scale = nodes_df.abs().max()
 
-    node_weights = nodes_df.to_dict()
-    data = self.get_graph_edgelist(weight_cols=weight_cols,
-                             norm_type=norm_type)
+
+    # nodes_scale = nodelist.abs().max()
+    # node_weights = nodelist.to_dict()
 
     interactive = True
     try:
@@ -106,15 +103,15 @@ def plot_graph(self, *,
     except:
         pass
 
-    path = draw_graph.graph(data,
+    path = draw_graph.graph(data=edgelist.copy(),
                             node_params=targets,
-                            node_weights=node_weights,
+                            nodelist=nodelist,
                             layout_dump=layout_dump,
                             weight_cols=weight_cols,
+                            node_cols=node_cols,
                             width=width,
                             height=height,
                             interactive=interactive,
-                            nodes_scale=nodes_scale,
                             nodes_threshold=nodes_threshold,
                             links_threshold=links_threshold)
 
