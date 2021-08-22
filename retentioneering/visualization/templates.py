@@ -88,6 +88,7 @@ __TEMPLATE__ = """
     nodesThreshold: {nodes_threshold},
     linksThreshold: {links_threshold},
     useLayoutDump: Boolean({layout_dump}),
+    weightTemplate: {weight_template},
   }})
 </script>
 </html>

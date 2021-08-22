@@ -16,6 +16,7 @@ def plot_graph(self, *,
                layout_dump=None,
                width=960,
                height=900,
+               weight_template=None,
                nodes_threshold=None,
                links_threshold=None):
     """
@@ -112,6 +113,7 @@ def plot_graph(self, *,
                             width=width,
                             height=height,
                             interactive=interactive,
+                            weight_template=weight_template,
                             nodes_threshold=nodes_threshold,
                             links_threshold=links_threshold)
 

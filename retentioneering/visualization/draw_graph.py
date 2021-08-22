@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 
 from retentioneering.visualization import templates
@@ -55,8 +56,13 @@ def _prepare_nodes(data, pos, node_params, node_cols, nodelist):
             max_degree = nodelist[weight_col].max()
             row = nodelist.loc[nodelist["event"] == node]
             index = row.index[0]
-            value = row[weight_col][index]
-            degree[weight_col] = (abs(value)) / abs(max_degree) * 30 + 4
+            r = row[weight_col]
+            r = r.tolist()
+            value = r[0]
+            currDegree = {}
+            currDegree["degree"] = (abs(value)) / abs(max_degree) * 30 + 4
+            currDegree["source"] = value
+            degree[weight_col] = currDegree
         node_pos = pos.get(node)
         nodes.update({node: {
             "index": idx,
@@ -195,6 +201,7 @@ def graph(data, *,
           show_percent=True,
           plot_name=None,
           nodelist=None,
+          weight_template=None,
           **kwargs):
     """
     Create interactive graph visualization. Each node is a unique ``event_col`` value, edges are transitions between events and edge weights are calculated metrics. By default, it is a percentage of unique users that have passed though a particular edge visualized with the edge thickness. Node sizes are  Graph loop is a transition to the same node, which may happen if users encountered multiple errors or made any action at least twice.
@@ -312,7 +319,8 @@ def graph(data, *,
             links_weights_names=links_weights_names,
             node_cols_names=node_cols_names,
             nodes_threshold=normNodesThreshold if normNodesThreshold is not None else "undefined",
-            links_threshold=normlinksThreshold if normlinksThreshold is not None else "undefined"
+            links_threshold=normlinksThreshold if normlinksThreshold is not None else "undefined",
+            weight_template= "`" + weight_template + "`" if weight_template is not None else "undefined",
         )
 
     plot_name = 'graph_{}'.format(datetime.now()).replace(':', '_').replace('.', '_') + '.html'
