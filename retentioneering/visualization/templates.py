@@ -59,6 +59,7 @@ __TEMPLATE__ = """
 
     .selected-node {{
       stroke: blue;
+      stroke-width: 3px;
     }}
 
     .circle.source_node {{
@@ -89,9 +90,24 @@ __TEMPLATE__ = """
     linksThreshold: {links_threshold},
     useLayoutDump: Boolean({layout_dump}),
     weightTemplate: {weight_template},
+    exportDfVarname: {export_df_varname},
+    executorHostname: {notebook_hostname},
+    executeContextId: {execute_context_id},
   }})
 </script>
 </html>
+"""
+
+__EXECITOR_TEMPLATE__ =  """
+<script>
+  window.addEventListener("message", (e) => {{
+    const reqId = "{execute_context_id}"
+    const kernel = IPython.notebook.kernel
+    if (e.data.reqId === reqId) {{
+      kernel.execute(e.data.execute)
+    }}
+  }})
+</script>
 """
 
 __OLD_TEMPLATE__ = """

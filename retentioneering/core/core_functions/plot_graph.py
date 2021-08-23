@@ -18,7 +18,9 @@ def plot_graph(self, *,
                height=900,
                weight_template=None,
                nodes_threshold=None,
-               links_threshold=None):
+               links_threshold=None,
+               export_df_varname=None,
+               notebook_hostname=None):
     """
     Create interactive graph visualization. Each node is a unique event_col
     value, edges are transitions between events and edge weights are calculated
@@ -115,7 +117,10 @@ def plot_graph(self, *,
                             interactive=interactive,
                             weight_template=weight_template,
                             nodes_threshold=nodes_threshold,
-                            links_threshold=links_threshold)
+                            links_threshold=links_threshold,
+                            export_df_varname=export_df_varname,
+                            notebook_hostname=notebook_hostname,
+                            )
 
     # if work from google colab user HTML display:
     if interactive == False:

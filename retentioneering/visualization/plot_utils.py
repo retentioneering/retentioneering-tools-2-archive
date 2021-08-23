@@ -53,13 +53,14 @@ class ___FigureWrapper__(object):
 
 
 class ___DynamicFigureWrapper__(object):
-    def __init__(self, fig, interactive, width, height, links):
+    def __init__(self, fig, interactive, width, height, links, raw_html=None):
         self.fig = fig
+        self.raw_html = raw_html 
         self.interactive, self.width, self.height = interactive, width, height
         self.links = links
 
     def get_figure(self):
-        savefig = __SaveFigWrapper__(self.fig, self.interactive, self.width, self.height)
+        savefig = __SaveFigWrapper__(self.fig, self.interactive, self.width, self.height, self.raw_html)
         return savefig
 
     def text(self, x, y, text, *args, **kwargs):
@@ -80,15 +81,18 @@ class ___DynamicFigureWrapper__(object):
 
 
 class __SaveFigWrapper__(object):
-    def __init__(self, data, interactive=True, width=1000, height=700):
+    def __init__(self, data, interactive=True, width=1000, height=700, raw_html=None):
         self.data = data
         self.interactive = interactive
         self.width = width
         self.height = height
+        self.raw_html= raw_html
 
     def savefig(self, name, **kwargs):
         with open(name, 'w', encoding="utf-8") as f:
             f.write(self.data)
         if self.interactive:
+            if self.raw_html is not None:
+                display(HTML(self.raw_html))
             display(IFrame(name, width=self.width, height=self.height))
 

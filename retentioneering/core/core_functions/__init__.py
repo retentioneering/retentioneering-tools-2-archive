@@ -8,6 +8,7 @@ from .base_dataset import BaseDataset
 from .get_edgelist import get_edgelist
 from .get_graph_edgelist import get_graph_edgelist
 from .get_graph_nodelist import get_graph_nodelist
+from .save_graph_layout import save_graph_layout
 from .get_adjacency import get_adjacency
 from .step_matrix import step_matrix
 from .get_clusters import get_clusters, filter_cluster, cluster_event_dist
@@ -20,6 +21,7 @@ from .funnel import funnel
 BaseDataset.get_edgelist = get_edgelist
 BaseDataset.get_graph_edgelist = get_graph_edgelist
 BaseDataset.get_graph_nodelist = get_graph_nodelist
+BaseDataset.save_graph_layout = save_graph_layout
 BaseDataset.get_adjacency = get_adjacency
 BaseDataset.step_matrix = step_matrix
 BaseDataset.get_clusters = get_clusters

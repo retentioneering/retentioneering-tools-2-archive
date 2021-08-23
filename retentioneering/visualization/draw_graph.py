@@ -5,6 +5,8 @@
 
 
 import json
+import random
+import string
 from datetime import datetime
 
 import networkx as nx
@@ -186,6 +188,9 @@ def _prepare_given_layout(nodes_path, node_params):
         nodes = _prepare_layout(nodes)
     return nodes
 
+def generateId(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
+
 
 @__save_plot__
 def graph(data, *,
@@ -202,6 +207,8 @@ def graph(data, *,
           plot_name=None,
           nodelist=None,
           weight_template=None,
+          export_df_varname=None,
+          notebook_hostname=None,
           **kwargs):
     """
     Create interactive graph visualization. Each node is a unique ``event_col`` value, edges are transitions between events and edge weights are calculated metrics. By default, it is a percentage of unique users that have passed though a particular edge visualized with the edge thickness. Node sizes are  Graph loop is a transition to the same node, which may happen if users encountered multiple errors or made any action at least twice.
@@ -308,6 +315,12 @@ def graph(data, *,
 
     __TEMPLATE__ = templates.__OLD_TEMPLATE__ if kwargs.get('use_old', False) else templates.__TEMPLATE__
 
+    execute_context_id = generateId()
+
+    executor = templates.__EXECITOR_TEMPLATE__.format(
+        execute_context_id=execute_context_id,
+    )
+
     x = __TEMPLATE__.format(
             width=width,
             height=height,
@@ -321,13 +334,17 @@ def graph(data, *,
             nodes_threshold=normNodesThreshold if normNodesThreshold is not None else "undefined",
             links_threshold=normlinksThreshold if normlinksThreshold is not None else "undefined",
             weight_template= "`" + weight_template + "`" if weight_template is not None else "undefined",
+            export_df_varname= "`" + export_df_varname + "`" if export_df_varname is not None else "undefined",
+            notebook_hostname= "`" + notebook_hostname + "`" if notebook_hostname is not None else "undefined",
+            execute_context_id = "`" + execute_context_id + "`",
         )
 
     plot_name = 'graph_{}'.format(datetime.now()).replace(':', '_').replace('.', '_') + '.html'
     plot_name = _.rete.retention_config['experiments_folder'] + '/' + plot_name
 
+
     return (
-        ___DynamicFigureWrapper__(x, interactive, width, height, res),
+        ___DynamicFigureWrapper__(x, interactive, width, height, res, executor),
         plot_name,
         plot_name,
         data.rete.retention_config
