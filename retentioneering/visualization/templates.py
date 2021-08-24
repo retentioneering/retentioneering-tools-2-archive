@@ -79,7 +79,7 @@ __TEMPLATE__ = """
 <body>
   <div id="root"></div>
 </body>
-<script src="http://localhost:8080/rete-graph.js" type="text/javascript"></script>
+<script src="https://static.server.retentioneering.com/viztools/graph/rete-graph.js" type="text/javascript"></script>
 <script type="text/javascript">
   initialize({{
     nodes: {nodes},
