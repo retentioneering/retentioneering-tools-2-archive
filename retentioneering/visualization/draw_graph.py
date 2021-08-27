@@ -20,6 +20,12 @@ from .plot_utils import __save_plot__, ___DynamicFigureWrapper__
 _ = pd.DataFrame()
 
 
+def find_index(collection, filter_lambda):
+    for index, item in enumerate(collection):
+        if filter_lambda(item):
+            return index
+    return None
+
 def _calc_layout(data,
                  node_params,
                  width=500,
@@ -95,15 +101,43 @@ def _prepare_edges(data, nodes, weight_cols):
                 "weight": row[weight_col],
             }
 
+        source_node = nodes.get(row.source)
+        target_node = nodes.get(row.target)
+
         edges.append({
-            "source": nodes.get(row.source),
-            "target": nodes.get(row.target),
+            "sourceIndex": source_node["index"],
+            "targetIndex": target_node["index"],
             "weights": weights,
             "type": row['type']
         })
 
 
     return edges, list(nodes.values())
+
+def _prepare_nodes_tree(nodelist):
+    tree = []    
+
+    for idx, row in nodelist.iterrows():
+        if (row.parent is None):
+            existing_index = find_index(tree, lambda x : x["name"] == row.event)
+            if existing_index is None:
+                tree.append({ 'name': row.event, 'children': [] })
+        else:
+            existing_parent_index = find_index(tree, lambda x : x["name"] == row.parent)
+            if existing_parent_index is not None:
+                tree[existing_parent_index]["children"].append({ 'name': row.event, 'children': [] })
+            else:
+                tree.append({
+                    'name': row.parent, 'children': [
+                        {
+                            'name': row.event,
+                            'children': []
+                        }
+                    ]
+                })
+    return tree
+
+
 
 # LEGACY
 def _filter_edgelist(data,
@@ -152,6 +186,7 @@ def _make_json_data(data,
         nodes = _prepare_nodes(data, pos, node_params, node_cols, nodelist)
 
     res['links'], res['nodes'] = _prepare_edges(data, nodes, weight_cols)
+    res['nodes_tree'] = _prepare_nodes_tree(nodelist)
     return res
 
 
@@ -315,11 +350,13 @@ def graph(data, *,
 
     __TEMPLATE__ = templates.__OLD_TEMPLATE__ if kwargs.get('use_old', False) else templates.__TEMPLATE__
 
+
     execute_context_id = generateId()
 
     executor = templates.__EXECITOR_TEMPLATE__.format(
         execute_context_id=execute_context_id,
     )
+
 
     x = __TEMPLATE__.format(
             width=width,
@@ -327,6 +364,7 @@ def graph(data, *,
             links=json.dumps(res.get('links')).encode('latin1').decode('utf-8'),
             node_params=json.dumps(node_params).encode('latin1').decode('utf-8'),
             nodes=json.dumps(res.get('nodes')).encode('latin1').decode('utf-8'),
+            nodes_tree=json.dumps(res.get('nodes_tree')).encode('latin1').decode('utf-8'),
             show_percent=show,
             layout_dump=dump,
             links_weights_names=links_weights_names,
