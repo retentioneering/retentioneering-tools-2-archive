@@ -8,6 +8,7 @@ import json
 import random
 import string
 from datetime import datetime
+from IPython.display import IFrame, display, HTML
 
 import networkx as nx
 import numpy as np
@@ -227,14 +228,12 @@ def generateId(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-@__save_plot__
 def graph(data, *,
           node_params=None,
           nodes_threshold=None,
           links_threshold=None,
           width=960,
           height=900,
-          interactive=True,
           layout_dump=None,
           weight_cols=None,
           node_cols=None,
@@ -348,19 +347,8 @@ def graph(data, *,
 
     dump = 1 if (layout_dump is not None) or (kwargs.get('is_model', False)) else 0
 
-    __TEMPLATE__ = templates.__OLD_TEMPLATE__ if kwargs.get('use_old', False) else templates.__TEMPLATE__
 
-
-    execute_context_id = generateId()
-
-    executor = templates.__EXECITOR_TEMPLATE__.format(
-        execute_context_id=execute_context_id,
-    )
-
-
-    x = __TEMPLATE__.format(
-            width=width,
-            height=height,
+    init_graph_js = templates.__INIT_GRAPH__.format(
             links=json.dumps(res.get('links')).encode('latin1').decode('utf-8'),
             node_params=json.dumps(node_params).encode('latin1').decode('utf-8'),
             nodes=json.dumps(res.get('nodes')).encode('latin1').decode('utf-8'),
@@ -371,21 +359,26 @@ def graph(data, *,
             node_cols_names=node_cols_names,
             nodes_threshold=normNodesThreshold if normNodesThreshold is not None else "undefined",
             links_threshold=normlinksThreshold if normlinksThreshold is not None else "undefined",
-            weight_template= "`" + weight_template + "`" if weight_template is not None else "undefined",
-            export_df_varname= "`" + export_df_varname + "`" if export_df_varname is not None else "undefined",
-            notebook_hostname= "`" + notebook_hostname + "`" if notebook_hostname is not None else "undefined",
-            execute_context_id = "`" + execute_context_id + "`",
+            weight_template= "'" + weight_template + "'" if weight_template is not None else "undefined",
+            export_df_varname= "'" + export_df_varname + "'" if export_df_varname is not None else "undefined",
+            notebook_hostname= "'" + notebook_hostname + "'" if notebook_hostname is not None else "undefined",
+            execute_context_id = "'fdfd'",
         )
 
-    plot_name = 'graph_{}'.format(datetime.now()).replace(':', '_').replace('.', '_') + '.html'
-    plot_name = _.rete.retention_config['experiments_folder'] + '/' + plot_name
+    graph_styles = templates.__GRAPH_STYLES__.format()
+    graph_body = templates.__GRAPH_BODY__.format()
 
 
-    return (
-        ___DynamicFigureWrapper__(x, interactive, width, height, res, executor),
-        plot_name,
-        plot_name,
-        data.rete.retention_config
+    html = templates.__RENDER_INNER_IFRAME__.format(
+        id=generateId(),
+        width=width,
+        height=height,
+        graph_body=graph_body,
+        graph_styles=graph_styles,
+        graph_script_src="https://static.server.retentioneering.com/viztools/graph/rete-graph.js",
+        init_graph_js=init_graph_js,
     )
+
+    display(HTML(html))
 
 

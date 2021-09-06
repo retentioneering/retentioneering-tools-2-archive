@@ -5,12 +5,19 @@
 
 
 import json
+import random
+import string
 from datetime import datetime
 import matplotlib.pyplot as plt
 
 import seaborn as sns
+from retentioneering.visualization import templates
 from functools import wraps
 from IPython.display import IFrame, display, HTML
+
+
+def generateId(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 
 def __save_plot__(func):
@@ -91,8 +98,18 @@ class __SaveFigWrapper__(object):
     def savefig(self, name, **kwargs):
         with open(name, 'w', encoding="utf-8") as f:
             f.write(self.data)
+        
         if self.interactive:
             if self.raw_html is not None:
                 display(HTML(self.raw_html))
-            display(IFrame(name, width=self.width, height=self.height))
+        else:
+            wrapped = templates.__RENDER_INNER_IFRAME__.format(
+                id=generateId(),
+                width=self.width,
+                height=self.height,
+                html=self.data
+            )
+            print(wrapped)
+            display(HTML(wrapped))
+
 

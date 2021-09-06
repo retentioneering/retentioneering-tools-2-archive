@@ -96,17 +96,7 @@ def plot_graph(self, *,
 
 
 
-    # nodes_scale = nodelist.abs().max()
-    # node_weights = nodelist.to_dict()
-
-    interactive = True
-    try:
-        import google.colab
-        interactive = False
-    except:
-        pass
-
-    path = draw_graph.graph(data=edgelist.copy(),
+    draw_graph.graph(data=edgelist.copy(),
                             node_params=targets,
                             nodelist=nodelist,
                             layout_dump=layout_dump,
@@ -114,17 +104,9 @@ def plot_graph(self, *,
                             node_cols=node_cols,
                             width=width,
                             height=height,
-                            interactive=interactive,
                             weight_template=weight_template,
                             nodes_threshold=nodes_threshold,
                             links_threshold=links_threshold,
                             export_df_varname=export_df_varname,
                             notebook_hostname=notebook_hostname,
                             )
-
-    # if work from google colab user HTML display:
-    if interactive == False:
-        display(HTML(path))
-        return
-
-    return path

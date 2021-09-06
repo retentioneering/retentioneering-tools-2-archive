@@ -26,11 +26,101 @@ __VEGA_TEMPLATE__ = """
 </html>
 """
 
+
+__RENDER_INNER_IFRAME__ = """
+<iframe id="{id}" src="about:blank" width="{width}" height="{height}">
+</iframe>
+<script>
+   (function() {{
+      const iframeDocument = document.getElementById(`{id}`).contentDocument
+      iframeDocument.body.innerHTML = `{graph_body}`
+
+      const styles = iframeDocument.createElement("style")
+      styles.innerHTML = `{graph_styles}`
+
+      const graphScript = iframeDocument.createElement("script")
+      graphScript.src = `{graph_script_src}`
+
+      graphScript.addEventListener("load", () => {{
+        const initGraph = iframeDocument.createElement("script")
+        initGraph.innerHTML = `{init_graph_js}`
+
+        iframeDocument.body.appendChild(initGraph)
+      }})
+
+      iframeDocument.head.appendChild(styles)
+      iframeDocument.head.appendChild(graphScript)
+   }})()
+</script>
+"""
+
+__GRAPH_STYLES__ = """
+    .svg-watermark {{
+      width: 100%;
+      font-size: 80px;
+      fill: #c2c2c2;
+      opacity: 0.3;
+      font-family: Arial;
+    }}
+
+    .link {{
+      fill: none;
+      stroke: #666;
+      stroke-opacity: 0.7;
+    }}
+
+    text {{
+      font: 12px sans-serif;
+      pointer-events: none;
+    }}
+
+    circle {{
+      fill: #ccc;
+      stroke: #333;
+      stroke-width: 1.5px;
+    }}
+
+    .selected-node {{
+      stroke: blue;
+      stroke-width: 3px;
+    }}
+
+    .circle.source_node {{
+      fill: #f3f310;
+    }}
+
+    .circle.nice_node {{
+      fill: green;
+    }}
+
+    .circle.bad_node {{
+      fill: red;
+    }}
+"""
+
+__GRAPH_BODY__ = """
+  <div id="root"></div>
+"""
+
+__INIT_GRAPH__ = """
+    initialize({{
+      configNodes: {nodes},
+      configLinks: {links},
+      configNodesTree: {nodes_tree},
+      nodesColsNames: {node_cols_names},
+      linksWeightsNames: {links_weights_names},
+      nodesThreshold: {nodes_threshold},
+      linksThreshold: {links_threshold},
+      useLayoutDump: Boolean({layout_dump}),
+      weightTemplate: {weight_template},
+      exportDfVarname: {export_df_varname},
+      executorHostname: {notebook_hostname},
+      executeContextId: {execute_context_id},
+    }})
+"""
+
+
 __TEMPLATE__ = """
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Graph Editor</title>
   <style type="text/css">
     .svg-watermark {{
       width: 100%;
@@ -75,28 +165,24 @@ __TEMPLATE__ = """
     }}
 
   </style>
-</head>
-<body>
   <div id="root"></div>
-</body>
-<script src="https://static.server.retentioneering.com/viztools/graph/rete-graph.js" type="text/javascript"></script>
-<script type="text/javascript">
-  initialize({{
-    configNodes: {nodes},
-    configLinks: {links},
-    configNodesTree: {nodes_tree},
-    nodesColsNames: {node_cols_names},
-    linksWeightsNames: {links_weights_names},
-    nodesThreshold: {nodes_threshold},
-    linksThreshold: {links_threshold},
-    useLayoutDump: Boolean({layout_dump}),
-    weightTemplate: {weight_template},
-    exportDfVarname: {export_df_varname},
-    executorHostname: {notebook_hostname},
-    executeContextId: {execute_context_id},
-  }})
-</script>
-</html>
+  <script src="https://static.server.retentioneering.com/viztools/graph/rete-graph.js" type="text/javascript"></script>
+  <script type="text/javascript">
+    initialize({{
+      configNodes: {nodes},
+      configLinks: {links},
+      configNodesTree: {nodes_tree},
+      nodesColsNames: {node_cols_names},
+      linksWeightsNames: {links_weights_names},
+      nodesThreshold: {nodes_threshold},
+      linksThreshold: {links_threshold},
+      useLayoutDump: Boolean({layout_dump}),
+      weightTemplate: {weight_template},
+      exportDfVarname: {export_df_varname},
+      executorHostname: {notebook_hostname},
+      executeContextId: {execute_context_id},
+    }})
+  </script>
 """
 
 __EXECITOR_TEMPLATE__ =  """
