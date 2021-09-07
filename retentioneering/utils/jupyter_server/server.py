@@ -1,5 +1,5 @@
 import uuid
-from retentioneering.lib.decorators.singleton import singleton
+from retentioneering.utils.decorators.singleton import singleton
 
 class Action():
   def __init__(self, method: str, callback):
