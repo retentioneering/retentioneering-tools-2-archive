@@ -7,8 +7,8 @@ import pandas as pd
 
 
 def get_graph_edgelist(self, *,
-                 weight_cols=None,
-                 norm_type=None):
+                       weight_cols=None,
+                       norm_type=None):
     """
     Creates weighted table of the transitions between events.
 
@@ -66,9 +66,9 @@ def get_graph_edgelist(self, *,
 
         for weight_col in weight_cols:
             agg_i = (data
-                .groupby(cols)[weight_col]
-                .nunique()
-                .reset_index())
+                     .groupby(cols)[weight_col]
+                     .nunique()
+                     .reset_index())
 
             agg = agg.join(agg_i[weight_col])
 
@@ -83,14 +83,19 @@ def get_graph_edgelist(self, *,
 
     if norm_type == 'node':
         if weight_col is None:
-            event_transitions_counter = data.groupby(event_col)[cols[1]].count().to_dict()
-            agg[default_weight_col] /= agg[cols[0]].map(event_transitions_counter)
+            event_transitions_counter = data.groupby(
+                event_col)[cols[1]].count().to_dict()
+            agg[default_weight_col] /= agg[cols[0]
+                                           ].map(event_transitions_counter)
         else:
-            event_transitions_counter = data.groupby(event_col)[cols[1]].count().to_dict()
-            agg[default_weight_col] /= agg[cols[0]].map(event_transitions_counter)
+            event_transitions_counter = data.groupby(
+                event_col)[cols[1]].count().to_dict()
+            agg[default_weight_col] /= agg[cols[0]
+                                           ].map(event_transitions_counter)
 
             for weight_col in weight_cols:
-                user_counter = data.groupby(cols[0])[weight_col].nunique().to_dict()
+                user_counter = data.groupby(
+                    cols[0])[weight_col].nunique().to_dict()
                 agg[weight_col] /= agg[cols[0]].map(user_counter)
 
     return agg

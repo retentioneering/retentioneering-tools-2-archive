@@ -27,6 +27,7 @@ def find_index(collection, filter_lambda):
             return index
     return None
 
+
 def _calc_layout(data,
                  node_params,
                  width=500,
@@ -34,11 +35,13 @@ def _calc_layout(data,
                  **kwargs):
     G = nx.DiGraph()
 
-    G.add_weighted_edges_from(data.loc[:, ['source', 'target', 'weight']].values)
+    G.add_weighted_edges_from(
+        data.loc[:, ['source', 'target', 'weight']].values)
 
     pos_new = nx.layout.spring_layout(G, k=kwargs.get('k', .1),
                                       iterations=kwargs.get('iterations', 300),
-                                      threshold=kwargs.get('nx_threshold', 1e-4),
+                                      threshold=kwargs.get(
+                                          'nx_threshold', 1e-4),
                                       seed=0)
 
     min_x = min([j[0] for i, j in pos_new.items()])
@@ -112,21 +115,23 @@ def _prepare_edges(data, nodes, weight_cols):
             "type": row['type']
         })
 
-
     return edges, list(nodes.values())
 
+
 def _prepare_nodes_tree(nodelist):
-    tree = []    
+    tree = []
 
     for idx, row in nodelist.iterrows():
         if (row.parent is None):
-            existing_index = find_index(tree, lambda x : x["name"] == row.event)
+            existing_index = find_index(tree, lambda x: x["name"] == row.event)
             if existing_index is None:
-                tree.append({ 'name': row.event, 'children': [] })
+                tree.append({'name': row.event, 'children': []})
         else:
-            existing_parent_index = find_index(tree, lambda x : x["name"] == row.parent)
+            existing_parent_index = find_index(
+                tree, lambda x: x["name"] == row.parent)
             if existing_parent_index is not None:
-                tree[existing_parent_index]["children"].append({ 'name': row.event, 'children': [] })
+                tree[existing_parent_index]["children"].append(
+                    {'name': row.event, 'children': []})
             else:
                 tree.append({
                     'name': row.parent, 'children': [
@@ -137,7 +142,6 @@ def _prepare_nodes_tree(nodelist):
                     ]
                 })
     return tree
-
 
 
 # LEGACY
@@ -176,7 +180,8 @@ def _make_json_data(data,
         lambda x: node_params.get(x.source) if node_params.get(x.source) == 'source' else node_params.get(
             x.target) or 'suit', 1)
 
-    pos, degrees = _calc_layout(data, node_params, width=width, height=height, **kwargs)
+    pos, degrees = _calc_layout(
+        data, node_params, width=width, height=height, **kwargs)
 
     if kwargs.get('nodelist') is not None:
         nodelist = kwargs.get('nodelist')
@@ -223,6 +228,7 @@ def _prepare_given_layout(nodes_path, node_params):
     if type(nodes) is list:
         nodes = _prepare_layout(nodes)
     return nodes
+
 
 def generateId(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
@@ -316,8 +322,6 @@ def graph(data, *,
             scale = nodelist[key].abs().max()
             normNodesThreshold[key] = nodes_threshold[key]/scale
 
-
-
     if node_params is None:
         node_params = _prepare_node_params(node_params, data)
     res = _make_json_data(data,
@@ -345,29 +349,32 @@ def graph(data, *,
     if show_percent:
         show = 1
 
-    dump = 1 if (layout_dump is not None) or (kwargs.get('is_model', False)) else 0
-
+    dump = 1 if (layout_dump is not None) or (
+        kwargs.get('is_model', False)) else 0
 
     init_graph_js = templates.__INIT_GRAPH__.format(
-            links=json.dumps(res.get('links')).encode('latin1').decode('utf-8'),
-            node_params=json.dumps(node_params).encode('latin1').decode('utf-8'),
-            nodes=json.dumps(res.get('nodes')).encode('latin1').decode('utf-8'),
-            nodes_tree=json.dumps(res.get('nodes_tree')).encode('latin1').decode('utf-8'),
-            show_percent=show,
-            layout_dump=dump,
-            links_weights_names=links_weights_names,
-            node_cols_names=node_cols_names,
-            nodes_threshold=normNodesThreshold if normNodesThreshold is not None else "undefined",
-            links_threshold=normlinksThreshold if normlinksThreshold is not None else "undefined",
-            weight_template= "'" + weight_template + "'" if weight_template is not None else "undefined",
-            export_df_varname= "'" + export_df_varname + "'" if export_df_varname is not None else "undefined",
-            notebook_hostname= "'" + notebook_hostname + "'" if notebook_hostname is not None else "undefined",
-            execute_context_id = "'fdfd'",
-        )
+        links=json.dumps(res.get('links')).encode('latin1').decode('utf-8'),
+        node_params=json.dumps(node_params).encode('latin1').decode('utf-8'),
+        nodes=json.dumps(res.get('nodes')).encode('latin1').decode('utf-8'),
+        nodes_tree=json.dumps(res.get('nodes_tree')).encode(
+            'latin1').decode('utf-8'),
+        show_percent=show,
+        layout_dump=dump,
+        links_weights_names=links_weights_names,
+        node_cols_names=node_cols_names,
+        nodes_threshold=normNodesThreshold if normNodesThreshold is not None else "undefined",
+        links_threshold=normlinksThreshold if normlinksThreshold is not None else "undefined",
+        weight_template="'" + weight_template +
+        "'" if weight_template is not None else "undefined",
+        export_df_varname="'" + export_df_varname +
+        "'" if export_df_varname is not None else "undefined",
+        notebook_hostname="'" + notebook_hostname +
+        "'" if notebook_hostname is not None else "undefined",
+        execute_context_id="'fdfd'",
+    )
 
     graph_styles = templates.__GRAPH_STYLES__.format()
     graph_body = templates.__GRAPH_BODY__.format()
-
 
     html = templates.__RENDER_INNER_IFRAME__.format(
         id=generateId(),
@@ -380,5 +387,3 @@ def graph(data, *,
     )
 
     display(HTML(html))
-
-
