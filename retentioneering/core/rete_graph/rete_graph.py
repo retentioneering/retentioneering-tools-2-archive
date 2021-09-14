@@ -318,7 +318,7 @@ class ReteGraph():
         weight_col = edgelist.columns[2]
         source_col = edgelist.columns[0]
         target_col = edgelist.columns[1]
-        weight_cols = self.rete.get_custom_cols()
+        custom_cols = self.rete.get_custom_cols()
         edges: MutableSequence[PreparedLink] = []
 
         edgelist['weight_norm'] = edgelist[weight_col] / \
@@ -332,16 +332,16 @@ class ReteGraph():
             weights = {
                 default_col: default_col_weight,
             }
-
-            for weight_col in weight_cols:
-                weight = cast(float, row[weight_col])
-                max_weight = cast(float, edgelist[weight_col].abs().max())
+            for custom_weight_col in custom_cols:
+                weight = cast(float, row[custom_weight_col])
+                max_weight = cast(
+                    float, edgelist[custom_weight_col].abs().max())
                 weight_norm = weight / max_weight
                 col_weight: Weight = {
                     "weight_norm": weight_norm,
-                    "weight": cast(float, row[weight_col]),
+                    "weight": cast(float, row[custom_weight_col]),
                 }
-                weights[weight_col] = col_weight
+                weights[custom_weight_col] = col_weight
 
             source_node_name = cast(str, row[source_col])
             target_node_name = cast(str, row[target_col])
@@ -434,7 +434,7 @@ class ReteGraph():
             height=height,
             graph_body=graph_body,
             graph_styles=graph_styles,
-            graph_script_src="http://localhost:8080/rete-graph.js",
+            graph_script_src="https://static.server.retentioneering.com/viztools/graph/rete-graph.js",
             init_graph_js=init_graph_js,
         )
 
