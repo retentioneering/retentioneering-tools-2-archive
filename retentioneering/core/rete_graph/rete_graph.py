@@ -4,7 +4,8 @@
 # * You can obtain License text at https://github.com/retentioneering/retentioneering-tools/blob/master/LICENSE.md
 
 
-from typing import Any, MutableSequence, Sequence, Mapping, Callable, Type, Optional, Union, Literal, TypedDict, MutableMapping, cast
+from typing import Any, MutableSequence, Sequence, Mapping, Callable, Type, Optional, Union, MutableMapping, cast
+from typing_extensions import Literal, TypedDict
 from pandas import DataFrame, Series
 from IPython.display import IFrame, display, HTML
 from retentioneering.utils.jupyter_server.server import ServerManager, JupyterServer
@@ -28,6 +29,7 @@ class PreparedNode(TypedDict):
     index: int
     name: str
     degree: MutableMapping[str, Degree]
+    changed_name: Optional[str]
     type: str
     x: Optional[float]
     y: Optional[float]
@@ -170,6 +172,8 @@ class ReteGraph():
             if index is not None:
                 nodelist.at[index, "active"] = node["active"]
                 nodelist.at[index, "parent"] = node["parent"]
+                if "changed_name" in node:
+                    nodelist.at[index, "changed_name"] = node["changed_name"]
                 for col, value in node['degree'].items():
                     nodelist.at[index, col] = value["source"]
             else:
@@ -185,6 +189,11 @@ class ReteGraph():
                         row[i] = node["alias"]
                     elif key == "parent":
                         row[i] = node["parent"]
+                    elif key == "changed_name":
+                        if "changed_name" in node:
+                            row[i] = node["changed_name"]
+                        else:
+                            row[i] = None
                     elif key in node["degree"]:
                         row[i] = node["degree"][key]["source"]
 
@@ -434,7 +443,7 @@ class ReteGraph():
             height=height,
             graph_body=graph_body,
             graph_styles=graph_styles,
-            graph_script_src="https://static.server.retentioneering.com/viztools/graph/rete-graph.js",
+            graph_script_src="http://localhost:8080/rete-graph.js",
             init_graph_js=init_graph_js,
         )
 

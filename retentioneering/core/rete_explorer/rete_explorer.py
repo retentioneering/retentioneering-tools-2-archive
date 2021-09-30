@@ -4,7 +4,8 @@
 # * You can obtain License text at https://github.com/retentioneering/retentioneering-tools/blob/master/LICENSE.md
 
 
-from typing import Sequence, Mapping, Callable, Type, Optional, Union, Literal, TypedDict, MutableMapping, MutableSequence, cast
+from typing import Sequence, Mapping, Callable, Type, Optional, Union, MutableMapping, MutableSequence, cast
+from typing_extensions import Literal, TypedDict
 from pandas import DataFrame
 from pandas.core.series import Series
 
@@ -98,6 +99,7 @@ class ReteExplorer():
         res["active"] = True
         res["alias"] = False
         res["parent"] = None
+        res["changed_name"] = None
         return res
 
     def create_edgelist(self, norm_type: NormType = None, clickstream: DataFrame = None):
