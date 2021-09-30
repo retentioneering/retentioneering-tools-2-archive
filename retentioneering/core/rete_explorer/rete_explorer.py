@@ -17,6 +17,7 @@ class ReteConfig(TypedDict):
     custom_cols: Optional[MutableSequence[str]]
     nodelist_base_col: Optional[str]
     edgelist_base_col: Optional[str]
+    experiments_folder: str
 
 
 NormFunc = Callable[[

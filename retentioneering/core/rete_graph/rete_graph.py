@@ -10,6 +10,7 @@ from pandas import DataFrame, Series
 from IPython.display import IFrame, display, HTML
 from retentioneering.utils.jupyter_server.server import ServerManager, JupyterServer
 from . import templates
+from datetime import datetime
 import networkx as nx
 import json
 import random
@@ -56,8 +57,24 @@ class SpringLayoutConfig(TypedDict):
     nx_threshold: float
 
 
+class LayoutNode(TypedDict):
+    name: str
+    x: float
+    y: float
+
+
+class GraphSettings(TypedDict, total=False):
+    show_weights: bool
+    show_percents: bool
+    show_nodes_names: bool
+    show_all_edges_for_targets: bool
+    show_nodes_without_links: bool
+    nodes_threshold: Threshold
+    links_threshold: Threshold
+
+
 def generateId(size=6, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
+    return "el" + ''.join(random.choice(chars) for _ in range(size))
 
 
 class ReteGraph():
@@ -69,13 +86,17 @@ class ReteGraph():
     server: JupyterServer
     env: Literal['colab', 'classic']
     spring_layout_config: SpringLayoutConfig
+    layout: Optional[DataFrame]
+    graph_settings: GraphSettings
 
     def __init__(
         self,
         rete: ReteExplorer,
         clickstream: DataFrame,
         nodelist: DataFrame,
-        edgelist: DataFrame
+        edgelist: DataFrame,
+        layout: DataFrame = None,
+        graph_settings: GraphSettings = {},
     ):
         sm = ServerManager()
         self.env = sm.check_env()
@@ -90,9 +111,25 @@ class ReteGraph():
             "nx_threshold": 1e-4
         }
 
+        self.layout = layout
+        self.graph_settings = graph_settings
+
         self.server.use("save-nodelist",
                         lambda n: self._on_nodelist_updated(n))
         self.server.use("recalculate", lambda n: self._on_recalc_request(n))
+        self.server.use("save-layout", lambda n: self._on_layout_request(n))
+        self.server.use("save-graph-settings",
+                        lambda n: self._on_graph_settings_request(n))
+
+    def _on_graph_settings_request(self, settings: GraphSettings):
+        self.graph_settings = settings
+
+    def _on_layout_request(self, layout_nodes: MutableSequence[LayoutNode]):
+        self.graph_updates = layout_nodes
+        self.layout = DataFrame(columns=["name", "x", "y"])
+        for layout_node in layout_nodes:
+            self.layout.loc[self.layout.shape[0]] = [
+                layout_node["name"], layout_node["x"], layout_node["y"]]
 
     def _on_recalc_request(self, nodes: MutableSequence[PreparedNode]):
         self.updates = nodes
@@ -310,6 +347,7 @@ class ReteGraph():
                 "active": active,
                 "alias": alias,
                 "parent": parent,
+                "changed_name": None,
                 "x": None,
                 "y": None,
             }
@@ -381,7 +419,9 @@ class ReteGraph():
             lambda x: node_params.get(x[source_col]) if node_params.get(x[source_col]) == 'source' else node_params.get(
                 x[target_col]) or 'suit', 1)
 
-        pos = self._calc_layout(edgelist=edgelist, width=width, height=height)
+        pos = self._use_layout(
+            self._calc_layout(edgelist=edgelist, width=width, height=height)
+        )
 
         nodes, nodes_set = self._prepare_nodes(
             nodelist=nodelist,
@@ -393,23 +433,84 @@ class ReteGraph():
 
         return nodes, links
 
+    def _use_layout(self, position: Position):
+        if self.layout is None:
+            return position
+        for node_name in position:
+            matched = self.layout[self.layout["name"] == node_name]
+            if not matched.empty:
+                x = cast(float, matched["x"].item())
+                y = cast(float, matched["y"].item())
+                position[node_name] = [x, y]
+
+        return position
+
     def _to_json(self, data):
         return json.dumps(data).encode('latin1').decode('utf-8')
 
+    def _apply_settings(
+        self,
+        show_weights: bool = None,
+        show_percents: bool = None,
+        show_nodes_names: bool = None,
+        show_all_edges_for_targets: bool = None,
+        show_nodes_without_links: bool = None,
+    ):
+        settings = self.graph_settings.copy()
+        if show_weights is not None:
+            settings["show_weights"] = show_weights
+        if show_percents is not None:
+            settings["show_percents"] = show_percents
+        if show_nodes_names is not None:
+            settings["show_nodes_names"] = show_nodes_names
+        if show_all_edges_for_targets is not None:
+            settings["show_all_edges_for_targets"] = show_all_edges_for_targets
+        if show_nodes_without_links is not None:
+            settings["show_nodes_without_links"] = show_nodes_without_links
+        return settings
+
+    def _save_html(self, html: str):
+        if self.env == "classic":
+            # TODO смерджить пути нормально
+            filename = 'graph_{}'.format(datetime.now()).replace(
+                ':', '_').replace('.', '_') + '.html'
+            path = self.rete.config["experiments_folder"] + "/" + filename
+            with open(path, 'w', encoding="utf-8") as f:
+                f.write(html)
+
+    def save_html(self):
+        self.plot_graph(display_graph=False)
+
     def plot_graph(
             self,
+            display_graph: bool = True,
             targets: MutableMapping[str, str] = None,
             width: int = 960,
             height: int = 900,
             weight_template: str = None,
+            show_weights: bool = None,
+            show_percents: bool = None,
+            show_nodes_names: bool = None,
+            show_all_edges_for_targets: bool = None,
+            show_nodes_without_links: bool = None,
             nodes_threshold: Threshold = None,
             links_threshold: Threshold = None,
     ):
+
+        settings = self._apply_settings(
+            show_weights=show_weights,
+            show_percents=show_percents,
+            show_nodes_names=show_nodes_names,
+            show_all_edges_for_targets=show_all_edges_for_targets,
+            show_nodes_without_links=show_nodes_without_links,
+        )
+
         node_params = self._make_node_params(targets)
-        norm_nodes_threshold = self._get_norm_node_threshold(
-            nodes_threshold=nodes_threshold)
-        norm_links_threshold = self._get_norm_link_threshold(
-            links_threshold=links_threshold)
+
+        norm_nodes_threshold = settings["nodes_threshold"] if "nodes_threshold" in settings else self._get_norm_node_threshold(
+            nodes_threshold)
+        norm_links_threshold = settings["links_threshold"] if "links_threshold" in settings else self._get_norm_link_threshold(
+            links_threshold)
         cols = self.rete.get_nodelist_cols()
 
         nodes, links = self._make_template_data(
@@ -418,18 +519,31 @@ class ReteGraph():
             height=height,
         )
 
+        def to_js_val(val=None):
+            return self._to_json(val) if val is not None else "undefined"
+
+        def get_option(name: str):
+            if name in settings:
+                return self._to_json(settings[name])
+            return "undefined"
+
         init_graph_js = templates.__INIT_GRAPH__.format(
             server_id="'" + self.server.id + "'",
             env="'" + self.env + "'",
             links=self._to_json(links),
             node_params=self._to_json(node_params),
             nodes=self._to_json(nodes),
-            # TODO: исправить когда лэйаут будет выделен
-            layout_dump=0,
+            layout_dump=1 if self.layout is not None else 0,
             links_weights_names=cols,
             node_cols_names=cols,
-            nodes_threshold=norm_nodes_threshold if norm_nodes_threshold is not None else "undefined",
-            links_threshold=norm_links_threshold if norm_links_threshold is not None else "undefined",
+            show_weights=get_option("show_weights"),
+            show_percents=get_option("show_percents"),
+            show_nodes_names=get_option("show_nodes_names"),
+            show_all_edges_for_targets=get_option(
+                "show_all_edges_for_targets"),
+            show_nodes_without_links=get_option("show_nodes_without_links"),
+            nodes_threshold=to_js_val(norm_nodes_threshold),
+            links_threshold=to_js_val(norm_links_threshold),
             weight_template="'" + weight_template +
             "'" if weight_template is not None else "undefined",
         )
@@ -437,14 +551,55 @@ class ReteGraph():
         graph_styles = templates.__GRAPH_STYLES__.format()
         graph_body = templates.__GRAPH_BODY__.format()
 
+        graph_script_src = "http://localhost:8080/rete-graph.js"
+
+        init_graph_template = templates.__INIT_GRAPH__.format(
+            server_id="'" + self.server.id + "'",
+            env="'" + self.env + "'",
+            node_params=self._to_json(node_params),
+            links="<%= links %>",
+            nodes="<%= nodes %>",
+            layout_dump=1,
+            links_weights_names=cols,
+            node_cols_names=cols,
+            show_weights="<%= show_weights %>",
+            show_percents="<%= show_percents %>",
+            show_nodes_names="<%= show_nodes_names %>",
+            show_all_edges_for_targets="<%= show_all_edges_for_targets %>",
+            show_nodes_without_links="<%= show_nodes_without_links %>",
+            nodes_threshold="<%= nodes_threshold %>",
+            links_threshold="<%= links_threshold %>",
+            weight_template="undefined",
+        )
+
+        html_template = templates.__FULL_HTML__.format(
+            content=templates.__RENDER_INNER_IFRAME__.format(
+                id=generateId(),
+                width=width,
+                height=height,
+                graph_body=graph_body,
+                graph_styles=graph_styles,
+                graph_script_src=graph_script_src,
+                init_graph_js=init_graph_template,
+                template=""
+            ),
+        )
+
         html = templates.__RENDER_INNER_IFRAME__.format(
             id=generateId(),
             width=width,
             height=height,
             graph_body=graph_body,
             graph_styles=graph_styles,
-            graph_script_src="http://localhost:8080/rete-graph.js",
+            graph_script_src=graph_script_src,
             init_graph_js=init_graph_js,
+            template=html_template,
         )
 
-        display(HTML(html))
+        full_html_page = templates.__FULL_HTML__.format(
+            content=html,
+        )
+        self._save_html(full_html_page)
+
+        if display_graph:
+            display(HTML(html))

@@ -27,8 +27,13 @@ __RENDER_INNER_IFRAME__ = """
 
       iframeDocument.head.appendChild(styles)
       iframeDocument.head.appendChild(graphScript)
+
+      iframeDocument.body.dataset.templateId = '{id}_template'
    }})()
 </script>
+<template id="{id}_template">
+  {template}
+</template>
 """
 
 __GRAPH_STYLES__ = """
@@ -89,7 +94,27 @@ __INIT_GRAPH__ = """
       linksWeightsNames: {links_weights_names},
       nodesThreshold: {nodes_threshold},
       linksThreshold: {links_threshold},
+      showWeights: {show_weights},
+      showPercents: {show_percents},
+      showNodesNames: {show_nodes_names},
+      showAllEdgesForTargets: {show_all_edges_for_targets},
+      showNodesWithoutLinks: {show_nodes_without_links},
       useLayoutDump: Boolean({layout_dump}),
       weightTemplate: {weight_template},
     }})
+"""
+
+
+__FULL_HTML__ = """
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Rete graph</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    {content}
+  </body>
+  </html>
 """
