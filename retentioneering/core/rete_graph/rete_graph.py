@@ -551,7 +551,7 @@ class ReteGraph():
         graph_styles = templates.__GRAPH_STYLES__.format()
         graph_body = templates.__GRAPH_BODY__.format()
 
-        graph_script_src = "http://localhost:8080/rete-graph.js"
+        graph_script_src = "https://static.server.retentioneering.com/viztools/graph/rete-graph.js"
 
         init_graph_template = templates.__INIT_GRAPH__.format(
             server_id="'" + self.server.id + "'",
