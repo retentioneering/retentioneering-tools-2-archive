@@ -1,5 +1,6 @@
 import uuid
 from retentioneering.utils.decorators.singleton import singleton
+import json
 
 
 class Action():
@@ -51,23 +52,23 @@ class ServerManager():
             if (target_server is not None):
                 result = target_server.dispatch_method(
                     method=method, payload=payload)
-                return {
+                return json.dumps({
                     "success": True,
                     "server_id": server_id,
                     "request_id": request_id,
                     "method": method,
                     "result": result
-                }
+                })
             else:
                 raise Exception('server not found!')
         except Exception as err:
-            return {
+            return json.dumps({
                 "success": False,
                 "server_id": server_id,
                 "request_id": request_id,
                 "method": method,
                 "result":  str(err)
-            }
+            })
 
     def _on_comm_message(self, comm, open_msg):
         @comm.on_msg
