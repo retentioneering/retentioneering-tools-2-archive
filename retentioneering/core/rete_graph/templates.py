@@ -9,26 +9,33 @@ __RENDER_INNER_IFRAME__ = """
 </iframe>
 <script>
    (function() {{
-      const iframeDocument = document.getElementById(`{id}`).contentDocument
-      iframeDocument.body.innerHTML = `{graph_body}`
+      console.log('init graph iframe')
+      const iframe = document.getElementById(`{id}`)
+      iframe.onload = () => {{
+        console.log('graph iframe loaded')
+        const iframeDocument = document.getElementById(`{id}`).contentDocument
+        iframeDocument.body.innerHTML = `{graph_body}`
+        const styles = iframeDocument.createElement("style")
+        styles.innerHTML = `{graph_styles}`
 
-      const styles = iframeDocument.createElement("style")
-      styles.innerHTML = `{graph_styles}`
 
-      const graphScript = iframeDocument.createElement("script")
-      graphScript.src = `{graph_script_src}`
+        const graphScript = iframeDocument.createElement("script")
+        graphScript.src = `{graph_script_src}`
 
-      graphScript.addEventListener("load", () => {{
-        const initGraph = iframeDocument.createElement("script")
-        initGraph.innerHTML = `{init_graph_js}`
+        graphScript.addEventListener("load", () => {{
+          console.log('graph lib loaded')
+          const initGraph = iframeDocument.createElement("script")
+          initGraph.innerHTML = `{init_graph_js}`
 
-        iframeDocument.body.appendChild(initGraph)
-      }})
+          iframeDocument.body.appendChild(initGraph)
+        }})
 
-      iframeDocument.head.appendChild(styles)
-      iframeDocument.head.appendChild(graphScript)
+        iframeDocument.head.appendChild(styles)
+        iframeDocument.head.appendChild(graphScript)
 
-      iframeDocument.body.dataset.templateId = '{id}_template'
+        iframeDocument.body.dataset.templateId = '{id}_template'
+        console.log('init graph iframe end')        
+      }}
    }})()
 </script>
 <template id="{id}_template">
