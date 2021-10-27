@@ -595,7 +595,7 @@ class ReteGraph():
             graph_styles=graph_styles,
             graph_script_src=graph_script_src,
             init_graph_js=init_graph_js,
-            template=html_template,
+            template="",
         )
 
         full_html_page = templates.__FULL_HTML__.format(
