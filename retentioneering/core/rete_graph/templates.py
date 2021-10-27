@@ -10,6 +10,7 @@ __RENDER_INNER_IFRAME__ = """
 <script>
    (function() {{
       console.log('init iframe')
+      console.log(`{id}`)
       debugger
       const iframeDocument = document.getElementById(`{id}`).contentDocument
       console.log(iframeDocument.body)
