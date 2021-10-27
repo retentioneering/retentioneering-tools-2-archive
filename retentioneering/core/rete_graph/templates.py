@@ -12,21 +12,26 @@ __RENDER_INNER_IFRAME__ = """
       console.log('init iframe')
       debugger
       const iframeDocument = document.getElementById(`{id}`).contentDocument
+      console.log(iframeDocument.body)
       iframeDocument.body.innerHTML = `{graph_body}`
 
+      console.log('set html')
       const styles = iframeDocument.createElement("style")
       styles.innerHTML = `{graph_styles}`
+
 
       const graphScript = iframeDocument.createElement("script")
       graphScript.src = `{graph_script_src}`
 
       graphScript.addEventListener("load", () => {{
+        console.log('graph script load')
         const initGraph = iframeDocument.createElement("script")
         initGraph.innerHTML = `{init_graph_js}`
 
         iframeDocument.body.appendChild(initGraph)
       }})
 
+      console.log('add graph script')
       iframeDocument.head.appendChild(styles)
       iframeDocument.head.appendChild(graphScript)
 
