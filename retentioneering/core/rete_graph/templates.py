@@ -9,6 +9,8 @@ __RENDER_INNER_IFRAME__ = """
 </iframe>
 <script>
    (function() {{
+      console.log('init iframe')
+      debugger
       const iframeDocument = document.getElementById(`{id}`).contentDocument
       iframeDocument.body.innerHTML = `{graph_body}`
 
@@ -29,6 +31,7 @@ __RENDER_INNER_IFRAME__ = """
       iframeDocument.head.appendChild(graphScript)
 
       iframeDocument.body.dataset.templateId = '{id}_template'
+      console.log('init end')
    }})()
 </script>
 <template id="{id}_template">
@@ -85,6 +88,8 @@ __GRAPH_BODY__ = """
 """
 
 __INIT_GRAPH__ = """
+    console.log('init graph')
+    debugger
     initialize({{
       serverId: {server_id},
       env: {env},
