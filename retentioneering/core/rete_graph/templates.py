@@ -12,32 +12,35 @@ __RENDER_INNER_IFRAME__ = """
       console.log('init iframe')
       console.log(`{id}`)
       debugger
-      const iframeDocument = document.getElementById(`{id}`).contentDocument
-      console.log(iframeDocument.body)
-      iframeDocument.body.innerHTML = `{graph_body}`
+      const iframe = document.getElementById(`{id}`)
+      iframe.onload = () => {{
+        const iframeDocument = document.getElementById(`{id}`).contentDocument
+        console.log(iframeDocument.body)
+        iframeDocument.body.innerHTML = `{graph_body}`
 
-      console.log('set html')
-      const styles = iframeDocument.createElement("style")
-      styles.innerHTML = `{graph_styles}`
+        console.log('set html')
+        const styles = iframeDocument.createElement("style")
+        styles.innerHTML = `{graph_styles}`
 
 
-      const graphScript = iframeDocument.createElement("script")
-      graphScript.src = `{graph_script_src}`
+        const graphScript = iframeDocument.createElement("script")
+        graphScript.src = `{graph_script_src}`
 
-      graphScript.addEventListener("load", () => {{
-        console.log('graph script load')
-        const initGraph = iframeDocument.createElement("script")
-        initGraph.innerHTML = `{init_graph_js}`
+        graphScript.addEventListener("load", () => {{
+          console.log('graph script load')
+          const initGraph = iframeDocument.createElement("script")
+          initGraph.innerHTML = `{init_graph_js}`
 
-        iframeDocument.body.appendChild(initGraph)
-      }})
+          iframeDocument.body.appendChild(initGraph)
+        }})
 
-      console.log('add graph script')
-      iframeDocument.head.appendChild(styles)
-      iframeDocument.head.appendChild(graphScript)
+        console.log('add graph script')
+        iframeDocument.head.appendChild(styles)
+        iframeDocument.head.appendChild(graphScript)
 
-      iframeDocument.body.dataset.templateId = '{id}_template'
-      console.log('init end')
+        iframeDocument.body.dataset.templateId = '{id}_template'
+        console.log('init end')        
+      }}
    }})()
 </script>
 <template id="{id}_template">
