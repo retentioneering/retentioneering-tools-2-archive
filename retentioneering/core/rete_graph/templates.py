@@ -5,13 +5,21 @@
 
 
 __RENDER_INNER_IFRAME__ = """
-<iframe id="{id}" src="about:blank" width="{width}" height="{height}">
+<script>
+   window.onIframeLoad = (id) => {{
+      window.reteLoadedIframes =  window.reteLoadedIframes || []
+      window.reteLoadedIframes.push(id)
+   }}
+</script>
+<iframe id="{id}" src="about:blank" width="{width}" height="{height}" onload="onIframeLoad(`{id}`)">
 </iframe>
 <script>
    (function() {{
       console.log('init graph iframe')
       const iframe = document.getElementById(`{id}`)
-      iframe.onload = () => {{
+      const iframeLoaded = window.reteLoadedIframes && window.reteLoadedIframes.includes(`{id}`)
+
+      const init = () => {{
         console.log('graph iframe loaded')
         const iframeDocument = document.getElementById(`{id}`).contentDocument
         iframeDocument.body.innerHTML = `{graph_body}`
@@ -34,7 +42,16 @@ __RENDER_INNER_IFRAME__ = """
         iframeDocument.head.appendChild(graphScript)
 
         iframeDocument.body.dataset.templateId = '{id}_template'
-        console.log('init graph iframe end')        
+        console.log('init graph iframe end')
+      }}
+
+      if (iframeLoaded) {{
+        init()
+        return
+      }}
+      iframe.onload = () => {{
+        init()
+        window.reteLoadedIframes.push(`{id}`)
       }}
    }})()
 </script>
