@@ -527,7 +527,7 @@ class ReteGraph():
                 return self._to_json(settings[name])
             return "undefined"
 
-        print("render graph2")
+        print("render graph3")
 
         init_graph_js = templates.__INIT_GRAPH__.format(
             server_id="'" + self.server.id + "'",
