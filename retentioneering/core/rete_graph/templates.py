@@ -11,7 +11,7 @@ __RENDER_INNER_IFRAME__ = """
       window.reteLoadedIframes.push(id)
    }}
 </script>
-<iframe id="{id}" src="about:blank" width="{width}" height="{height}" onload="setTimeout(() => window.onIframeLoad(`{id}`), 2000)">
+<iframe id="{id}" src="about:blank" width="{width}" height="{height}" onload="window.onIframeLoad(`{id}`)">
 </iframe>
 <script>
    (function() {{
@@ -44,6 +44,8 @@ __RENDER_INNER_IFRAME__ = """
         iframeDocument.body.dataset.templateId = '{id}_template'
         console.log('init graph iframe end')
       }}
+
+      console.log(`iframe loaded: ` + iframeLoaded)
 
       if (iframeLoaded) {{
         init()
