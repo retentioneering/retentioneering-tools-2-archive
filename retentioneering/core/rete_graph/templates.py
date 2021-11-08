@@ -11,7 +11,7 @@ __RENDER_INNER_IFRAME__ = """
       window.reteLoadedIframes.push(id)
    }}
 </script>
-<iframe id="{id}" src="about:blank" width="{width}" height="{height}" onload="onIframeLoad(`{id}`)">
+<iframe id="{id}" src="about:blank" width="{width}" height="{height}" onload="setTimeout(() => window.onIframeLoad(`{id}`), 2000)">
 </iframe>
 <script>
    (function() {{
