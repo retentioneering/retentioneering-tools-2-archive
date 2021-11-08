@@ -5,13 +5,7 @@
 
 
 __RENDER_INNER_IFRAME__ = """
-<script>
-   window.onIframeLoad = (id) => {{
-      window.reteLoadedIframes =  window.reteLoadedIframes || []
-      window.reteLoadedIframes.push(id)
-   }}
-</script>
-<iframe id="{id}" src="about:blank" width="{width}" height="{height}" onload="window.onIframeLoad(`{id}`)">
+<iframe id="{id}" src="about:blank" width="{width}" height="{height}" onload="window.reteLoadedIframes =  window.reteLoadedIframes || []; window.reteLoadedIframes.push(`{id}`)">
 </iframe>
 <script>
    (function() {{
