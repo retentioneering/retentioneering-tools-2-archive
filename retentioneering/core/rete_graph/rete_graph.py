@@ -76,6 +76,12 @@ class GraphSettings(TypedDict, total=False):
 def generateId(size=6, chars=string.ascii_uppercase + string.digits):
     return "el" + ''.join(random.choice(chars) for _ in range(size))
 
+def clear_dict(d: dict):
+    for k, v in dict(d).items():
+        if v is None:
+            del d[k]
+    return d
+
 
 class ReteGraph():
     from retentioneering.core.rete_explorer.rete_explorer import ReteExplorer
@@ -126,10 +132,7 @@ class ReteGraph():
 
     def _on_layout_request(self, layout_nodes: MutableSequence[LayoutNode]):
         self.graph_updates = layout_nodes
-        self.layout = DataFrame(columns=["name", "x", "y"])
-        for layout_node in layout_nodes:
-            self.layout.loc[self.layout.shape[0]] = [
-                layout_node["name"], layout_node["x"], layout_node["y"]]
+        self.layout = DataFrame(layout_nodes)
 
     def _on_recalc_request(self, nodes: MutableSequence[PreparedNode]):
         self.updates = nodes
@@ -200,51 +203,47 @@ class ReteGraph():
     def _on_nodelist_updated(self, nodes: MutableSequence[PreparedNode]):
         self.updates = nodes
         event_col = self.rete.config["event_col"]
-        nodelist = self.nodelist
-        for node in nodes:
-            indexes = nodelist.index[nodelist[event_col]
-                                     == node['name']].tolist()
-            index = indexes[0] if len(indexes) > 0 else None
-
-            if index is not None:
-                nodelist.at[index, "active"] = node["active"]
-                nodelist.at[index, "parent"] = node["parent"]
-                if "changed_name" in node:
-                    nodelist.at[index, "changed_name"] = node["changed_name"]
-                for col, value in node['degree'].items():
-                    nodelist.at[index, col] = value["source"]
-            else:
-                row: MutableSequence[Any] = [None] * len(nodelist.columns)
-
-                for i in range(len(nodelist.columns.tolist())):
-                    key = nodelist.columns[i]
-                    if key == event_col:
-                        row[i] = node["name"]
-                    elif key == "active":
-                        row[i] = node["active"]
-                    elif key == "alias":
-                        row[i] = node["alias"]
-                    elif key == "parent":
-                        row[i] = node["parent"]
-                    elif key == "changed_name":
-                        if "changed_name" in node:
-                            row[i] = node["changed_name"]
-                        else:
-                            row[i] = None
-                    elif key in node["degree"]:
-                        row[i] = node["degree"][key]["source"]
-
-                nodelist.loc[node["index"]] = row
+        # prepare data, map cols
+        mapped_nodes = []
+        for i, n in enumerate(nodes):
+            source_node = cast(dict,n)
+            mapped_node = {}
+            for key, source_value in source_node.items():
+                if key == "degree":
+                    for col_name, deg in source_value.items():
+                        mapped_node[col_name] = deg["source"]
+                    continue
+                if key == "name":
+                    mapped_node[event_col] = source_value
+                    continue
+                if key == "index":
+                    mapped_node["index"] = source_value
+                    continue
+                # filter fields
+                if key not in self.nodelist.columns:
+                    continue
+                mapped_node[key] = source_value
+            mapped_nodes.append(mapped_node)
+        
+        self.nodelist = DataFrame(data=mapped_nodes)
+        self.nodelist.set_index("index")
+        self.nodelist = self.nodelist.drop(columns=["index"])
+        
+    def _map_targets(self, targets: MutableMapping[str, str]):
+        mapped = {}
+        for key, source_value in targets.items():
+            mapped_value = source_value
+            if source_value == 'red':
+                mapped_value = 'bad_target'
+            if source_value == 'green':
+                mapped_value = 'nice_target'
+            mapped[key] = mapped_value
+        return mapped
+        
 
     def _make_node_params(self, targets: MutableMapping[str, str] = None):
         if targets is not None:
-            for k, v in targets.items():
-                if v == 'red':
-                    v = 'bad_target'
-                if v == 'green':
-                    v = 'nice_target'
-                targets[k] = v
-            return targets
+            return self._map_targets(targets)
         else:
             _node_params = {
                 'positive_target_event': 'nice_target',
@@ -299,11 +298,18 @@ class ReteGraph():
                                           iterations=self.spring_layout_config["iterations"],
                                           threshold=self.spring_layout_config["nx_threshold"],
                                           seed=0)
+        
+        all_x_coords: Sequence[float] = []
+        all_y_coords: Sequence[float] = []
 
-        min_x = min([j[0] for i, j in pos_new.items()])
-        min_y = min([j[1] for i, j in pos_new.items()])
-        max_x = max([j[0] for i, j in pos_new.items()])
-        max_y = max([j[1] for i, j in pos_new.items()])
+        for j in pos_new.values():
+            all_x_coords.append(j[0])
+            all_y_coords.append(j[1])
+
+        min_x = min(all_x_coords)
+        min_y = min(all_y_coords)
+        max_x = max(all_x_coords)
+        max_y = max(all_y_coords)
 
         pos_new: Position = {
             i: [(j[0] - min_x) / (max_x - min_x) * (width - 150) + 75,
@@ -456,18 +462,16 @@ class ReteGraph():
         show_all_edges_for_targets: bool = None,
         show_nodes_without_links: bool = None,
     ):
-        settings = self.graph_settings.copy()
-        if show_weights is not None:
-            settings["show_weights"] = show_weights
-        if show_percents is not None:
-            settings["show_percents"] = show_percents
-        if show_nodes_names is not None:
-            settings["show_nodes_names"] = show_nodes_names
-        if show_all_edges_for_targets is not None:
-            settings["show_all_edges_for_targets"] = show_all_edges_for_targets
-        if show_nodes_without_links is not None:
-            settings["show_nodes_without_links"] = show_nodes_without_links
-        return settings
+        settings = {
+            "show_weights": show_weights,
+            "show_percents": show_percents,
+            "show_nodes_names": show_nodes_names,
+            "show_all_edges_for_targets": show_all_edges_for_targets,
+            "show_nodes_without_links": show_nodes_without_links,
+        }
+        merged = {**self.graph_settings, **clear_dict(settings)}
+        return cast(GraphSettings, merged)
+        
 
     def _save_html(self, html: str):
         if self.env == "classic":
