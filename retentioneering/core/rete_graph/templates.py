@@ -71,6 +71,19 @@ __GRAPH_STYLES__ = """
       stroke-opacity: 0.7;
     }}
 
+    .link.source {{
+      stroke: #f3f310;
+    }}
+
+    .link.nice {{
+      stroke: green;
+    }}
+
+    .link.bad {{
+      stroke: red;
+    }}
+
+
     text {{
       font: 12px sans-serif;
       pointer-events: none;

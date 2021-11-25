@@ -76,6 +76,7 @@ class GraphSettings(TypedDict, total=False):
 def generateId(size=6, chars=string.ascii_uppercase + string.digits):
     return "el" + ''.join(random.choice(chars) for _ in range(size))
 
+
 def clear_dict(d: dict):
     for k, v in dict(d).items():
         if v is None:
@@ -206,7 +207,7 @@ class ReteGraph():
         # prepare data, map cols
         mapped_nodes = []
         for i, n in enumerate(nodes):
-            source_node = cast(dict,n)
+            source_node = cast(dict, n)
             mapped_node = {}
             for key, source_value in source_node.items():
                 if key == "degree":
@@ -224,30 +225,18 @@ class ReteGraph():
                     continue
                 mapped_node[key] = source_value
             mapped_nodes.append(mapped_node)
-        
+
         self.nodelist = DataFrame(data=mapped_nodes)
         self.nodelist.set_index("index")
         self.nodelist = self.nodelist.drop(columns=["index"])
-        
-    def _map_targets(self, targets: MutableMapping[str, str]):
-        mapped = {}
-        for key, source_value in targets.items():
-            mapped_value = source_value
-            if source_value == 'red':
-                mapped_value = 'bad_target'
-            if source_value == 'green':
-                mapped_value = 'nice_target'
-            mapped[key] = mapped_value
-        return mapped
-        
 
     def _make_node_params(self, targets: MutableMapping[str, str] = None):
         if targets is not None:
-            return self._map_targets(targets)
+            return targets
         else:
             _node_params = {
-                'positive_target_event': 'nice_target',
-                'negative_target_event': 'bad_target',
+                'positive_target_event': 'nice',
+                'negative_target_event': 'bad',
                 'source_event': 'source',
             }
             node_params: NodeParams = {}
@@ -298,7 +287,7 @@ class ReteGraph():
                                           iterations=self.spring_layout_config["iterations"],
                                           threshold=self.spring_layout_config["nx_threshold"],
                                           seed=0)
-        
+
         all_x_coords: Sequence[float] = []
         all_y_coords: Sequence[float] = []
 
@@ -471,7 +460,6 @@ class ReteGraph():
         }
         merged = {**self.graph_settings, **clear_dict(settings)}
         return cast(GraphSettings, merged)
-        
 
     def _save_html(self, html: str):
         if self.env == "classic":
